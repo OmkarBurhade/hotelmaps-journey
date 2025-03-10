@@ -1,11 +1,7 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
-import { toast } from '@/components/ui/use-toast';
-import { Hotel } from '@/types/Hotel';
 import hotelData from '@/data/hotels.json';
-import HotelDetail from '@/components/HotelDetail';
-
-// Import our new components
+import { Hotel } from '@/types/Hotel';
+import { toast } from '@/components/ui/use-toast';
 import Header from './components/Header';
 import SearchSection from './components/SearchSection';
 import MapSection from './components/MapSection';
@@ -42,7 +38,8 @@ const Index = () => {
       const matchesSearch = searchQuery ? 
         hotel.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
         hotel.state.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        hotel.city.toLowerCase().includes(searchQuery.toLowerCase()) : true;
+        hotel.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        hotel.address.toLowerCase().includes(searchQuery.toLowerCase()) : true;
       
       const matchesState = selectedState ? hotel.state === selectedState : true;
       
@@ -126,14 +123,15 @@ const Index = () => {
         {/* Search and filters section */}
         <SearchSection 
           searchQuery={searchQuery}
-          handleSearch={handleSearch}
-          handleLocationSelect={handleLocationSelect}
-          states={states}
           selectedState={selectedState}
-          handleStateFilter={handleStateFilter}
+          states={states}
           stateHotelCounts={stateHotelCounts}
+          hotels={hotels}
+          handleSearch={handleSearch}
+          handleStateFilter={handleStateFilter}
+          handleLocationSelect={handleLocationSelect}
         />
-        
+
         {/* Content layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Map section */}
@@ -141,8 +139,8 @@ const Index = () => {
             hotels={hotels}
             searchQuery={searchQuery}
             selectedState={selectedState}
-            onHotelSelect={handleHotelSelect}
             focusLocation={focusLocation}
+            onHotelSelect={handleHotelSelect}
           />
 
           {/* Sidebar - Hotel results */}
@@ -167,10 +165,27 @@ const Index = () => {
 
       {/* Hotel detail modal */}
       {showHotelDetail && selectedHotel && (
-        <HotelDetail
-          hotel={selectedHotel}
-          onClose={handleCloseDetail}
-        />
+        <div>
+          {/* Hotel detail component */}
+          <div className="relative z-50">
+            {showHotelDetail && selectedHotel && (
+              <div>
+                <div>
+                  <div>
+                    {/* Hotel detail component */}
+                    {React.createElement(
+                      require('@/components/HotelDetail').default,
+                      {
+                        hotel: selectedHotel,
+                        onClose: handleCloseDetail
+                      }
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

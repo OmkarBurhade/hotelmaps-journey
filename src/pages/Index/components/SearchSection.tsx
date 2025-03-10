@@ -2,32 +2,39 @@
 import React from 'react';
 import Search from '@/components/Search';
 import FilterChip from '@/components/FilterChip';
+import { Hotel } from '@/types/Hotel';
 
 interface SearchSectionProps {
   searchQuery: string;
-  handleSearch: (query: string) => void;
-  handleLocationSelect: (location: string) => void;
-  states: string[];
   selectedState: string | null;
-  handleStateFilter: (state: string) => void;
+  states: string[];
   stateHotelCounts: Record<string, number>;
+  hotels: Hotel[];
+  handleSearch: (query: string) => void;
+  handleStateFilter: (state: string) => void;
+  handleLocationSelect: (location: string) => void;
 }
 
 const SearchSection: React.FC<SearchSectionProps> = ({
   searchQuery,
-  handleSearch,
-  handleLocationSelect,
-  states,
   selectedState,
+  states,
+  stateHotelCounts,
+  hotels,
+  handleSearch,
   handleStateFilter,
-  stateHotelCounts
+  handleLocationSelect,
 }) => {
+  // Extract unique addresses from hotels
+  const addresses = hotels.map(hotel => `${hotel.address} (${hotel.name})`);
+
   return (
     <div className="animate-on-mount mb-6 opacity-0 transform translate-y-4 transition-all duration-700" style={{ transitionDelay: '200ms' }}>
       <Search 
         onSearch={handleSearch}
         searchQuery={searchQuery}
         states={states}
+        addresses={addresses}
         onLocationSelect={handleLocationSelect}
       />
       

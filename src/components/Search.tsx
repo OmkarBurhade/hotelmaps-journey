@@ -1,11 +1,12 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Search as SearchIcon, MapPin, X } from 'lucide-react';
+import { Search as SearchIcon, MapPin, Building, X } from 'lucide-react';
 
 interface SearchProps {
   onSearch: (query: string) => void;
   searchQuery: string;
   states: string[];
+  addresses: string[];
   onLocationSelect?: (location: string) => void;
 }
 
@@ -13,6 +14,7 @@ const Search: React.FC<SearchProps> = ({
   onSearch, 
   searchQuery, 
   states, 
+  addresses, 
   onLocationSelect 
 }) => {
   const [query, setQuery] = useState(searchQuery);
@@ -24,7 +26,15 @@ const Search: React.FC<SearchProps> = ({
   // Filter states based on input query
   const filteredStates = states.filter(
     state => state.toLowerCase().includes(query.toLowerCase())
-  ).slice(0, 5);
+  ).slice(0, 3);
+
+  // Filter addresses based on input query
+  const filteredAddresses = addresses.filter(
+    address => address.toLowerCase().includes(query.toLowerCase())
+  ).slice(0, 3);
+
+  // Combine suggestions
+  const combinedSuggestions = [...filteredStates, ...filteredAddresses];
 
   // Handle click outside to close suggestions
   useEffect(() => {
@@ -95,6 +105,11 @@ const Search: React.FC<SearchProps> = ({
     }
   };
 
+  // Determine if a suggestion is a state or an address
+  const isSuggestionState = (suggestion: string) => {
+    return states.includes(suggestion);
+  };
+
   return (
     <div className="relative w-full max-w-md mx-auto">
       <form 
@@ -122,7 +137,7 @@ const Search: React.FC<SearchProps> = ({
               }
             }}
             onBlur={() => setIsFocused(false)}
-            placeholder="Search for hotels by location..."
+            placeholder="Search for hotels by location or address..."
             className="w-full pl-10 pr-10 py-3 rounded-xl border border-border bg-background focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-300 focus-visible:outline-none"
           />
           {query && (
@@ -138,20 +153,24 @@ const Search: React.FC<SearchProps> = ({
       </form>
 
       {/* Search suggestions */}
-      {showSuggestions && filteredStates.length > 0 && (
+      {showSuggestions && combinedSuggestions.length > 0 && (
         <div 
           ref={suggestionsRef}
           className="absolute z-10 mt-1 w-full bg-background border border-border rounded-xl shadow-lg animate-slide-up overflow-hidden"
         >
           <div className="py-1">
-            {filteredStates.map((state, index) => (
+            {combinedSuggestions.map((suggestion, index) => (
               <div
                 key={index}
-                onClick={() => handleSelectSuggestion(state)}
+                onClick={() => handleSelectSuggestion(suggestion)}
                 className="flex items-center px-4 py-2 cursor-pointer hover:bg-muted transition-colors duration-150"
               >
-                <MapPin size={16} className="mr-2 text-muted-foreground" />
-                <span>{state}</span>
+                {isSuggestionState(suggestion) ? (
+                  <MapPin size={16} className="mr-2 text-muted-foreground" />
+                ) : (
+                  <Building size={16} className="mr-2 text-muted-foreground" />
+                )}
+                <span>{suggestion}</span>
               </div>
             ))}
           </div>
