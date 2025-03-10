@@ -24,6 +24,11 @@ const Index = () => {
     return Array.from(stateSet);
   }, [hotels]);
 
+  // Extract addresses from hotels
+  const addresses = useMemo(() => {
+    return hotels.map(hotel => `${hotel.address}, ${hotel.city}, ${hotel.state}`);
+  }, [hotels]);
+
   // Count hotels by state
   const stateHotelCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -39,7 +44,8 @@ const Index = () => {
       const matchesSearch = searchQuery ? 
         hotel.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
         hotel.state.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        hotel.city.toLowerCase().includes(searchQuery.toLowerCase()) : true;
+        hotel.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        hotel.address.toLowerCase().includes(searchQuery.toLowerCase()) : true;
       
       const matchesState = selectedState ? hotel.state === selectedState : true;
       
@@ -141,6 +147,7 @@ const Index = () => {
             onSearch={handleSearch}
             searchQuery={searchQuery}
             states={states}
+            addresses={addresses}
             onLocationSelect={handleLocationSelect}
           />
           
