@@ -25,9 +25,10 @@ interface MapProps {
   searchQuery: string;
   selectedState: string | null;
   onHotelSelect: (hotel: Hotel) => void;
+  focusLocation?: string;
 }
 
-const Map: React.FC<MapProps> = ({ hotels, searchQuery, selectedState, onHotelSelect }) => {
+const Map: React.FC<MapProps> = ({ hotels, searchQuery, selectedState, onHotelSelect, focusLocation }) => {
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.Marker[]>([]);
@@ -114,6 +115,40 @@ const Map: React.FC<MapProps> = ({ hotels, searchQuery, selectedState, onHotelSe
       mapRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 });
     }
   }, [hotels, searchQuery, selectedState, isMapInitialized, onHotelSelect]);
+
+  // Handle focus on a specific location when focusLocation changes
+  useEffect(() => {
+    if (!mapRef.current || !isMapInitialized || !focusLocation) return;
+
+    // Find hotels in the specified location (state)
+    const hotelsInLocation = hotels.filter(hotel => 
+      hotel.state.toLowerCase() === focusLocation.toLowerCase() ||
+      hotel.city.toLowerCase() === focusLocation.toLowerCase()
+    );
+
+    if (hotelsInLocation.length > 0) {
+      // Create bounds from all matching hotels
+      const bounds = L.latLngBounds(hotelsInLocation.map(hotel => [hotel.coordinates[0], hotel.coordinates[1]]));
+      
+      // Animate to the bounds
+      mapRef.current.flyToBounds(bounds, {
+        padding: [50, 50],
+        maxZoom: 10,
+        duration: 1.5
+      });
+      
+      // Highlight markers by opening popups for the focused location
+      markersRef.current.forEach(marker => {
+        const latLng = marker.getLatLng();
+        const inBounds = bounds.contains(latLng);
+        if (inBounds) {
+          setTimeout(() => {
+            marker.openPopup();
+          }, 1800); // Wait for the animation to complete
+        }
+      });
+    }
+  }, [focusLocation, hotels, isMapInitialized]);
 
   return (
     <div className="map-container w-full h-full rounded-2xl overflow-hidden border border-border/50 bg-card">

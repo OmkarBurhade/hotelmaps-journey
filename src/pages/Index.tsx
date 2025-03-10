@@ -8,12 +8,14 @@ import FilterChip from '@/components/FilterChip';
 import hotelData from '@/data/hotels.json';
 import { Hotel } from '@/types/Hotel';
 import { MapPin } from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedState, setSelectedState] = useState<string | null>(null);
   const [selectedHotel, setSelectedHotel] = useState<Hotel | null>(null);
   const [showHotelDetail, setShowHotelDetail] = useState(false);
+  const [focusLocation, setFocusLocation] = useState<string | null>(null);
   const hotels = useMemo(() => hotelData.hotels as Hotel[], []);
 
   // Get unique states from hotels
@@ -61,6 +63,23 @@ const Index = () => {
     }
   };
 
+  // Handle location select to focus map
+  const handleLocationSelect = (location: string) => {
+    setFocusLocation(location);
+    
+    // Show success toast
+    toast({
+      title: "Location focused",
+      description: `Map centered on "${location}"`,
+      duration: 3000,
+    });
+    
+    // Reset focus after a delay to allow future searches of the same location
+    setTimeout(() => {
+      setFocusLocation(null);
+    }, 2000);
+  };
+
   // Handle state filter click
   const handleStateFilter = (state: string) => {
     if (selectedState === state) {
@@ -68,6 +87,7 @@ const Index = () => {
     } else {
       setSelectedState(state);
       setSearchQuery(state);
+      setFocusLocation(state); // Also focus the map on the selected state
     }
   };
 
@@ -121,6 +141,7 @@ const Index = () => {
             onSearch={handleSearch}
             searchQuery={searchQuery}
             states={states}
+            onLocationSelect={handleLocationSelect}
           />
           
           {/* State filters */}
@@ -147,6 +168,7 @@ const Index = () => {
                 searchQuery={searchQuery}
                 selectedState={selectedState}
                 onHotelSelect={handleHotelSelect}
+                focusLocation={focusLocation}
               />
             </div>
           </div>

@@ -6,9 +6,15 @@ interface SearchProps {
   onSearch: (query: string) => void;
   searchQuery: string;
   states: string[];
+  onLocationSelect?: (location: string) => void;
 }
 
-const Search: React.FC<SearchProps> = ({ onSearch, searchQuery, states }) => {
+const Search: React.FC<SearchProps> = ({ 
+  onSearch, 
+  searchQuery, 
+  states, 
+  onLocationSelect 
+}) => {
   const [query, setQuery] = useState(searchQuery);
   const [isFocused, setIsFocused] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -53,6 +59,12 @@ const Search: React.FC<SearchProps> = ({ onSearch, searchQuery, states }) => {
   const handleSelectSuggestion = (suggestion: string) => {
     setQuery(suggestion);
     onSearch(suggestion);
+    
+    // Trigger location select to center map
+    if (onLocationSelect) {
+      onLocationSelect(suggestion);
+    }
+    
     setShowSuggestions(false);
     if (inputRef.current) {
       inputRef.current.blur();
@@ -62,6 +74,12 @@ const Search: React.FC<SearchProps> = ({ onSearch, searchQuery, states }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSearch(query);
+    
+    // Trigger location select to center map
+    if (onLocationSelect && query) {
+      onLocationSelect(query);
+    }
+    
     setShowSuggestions(false);
     if (inputRef.current) {
       inputRef.current.blur();
