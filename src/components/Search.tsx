@@ -42,7 +42,7 @@ const Search: React.FC<SearchProps> = ({
   const filteredAddresses = addresses.filter(
     address => address.toLowerCase().includes(query.toLowerCase())
   ).slice(0, 2);
-  
+
   // Filter hotel names based on input query
   const filteredNames = hotelNames.filter(
     name => name.toLowerCase().includes(query.toLowerCase())
@@ -136,53 +136,54 @@ const Search: React.FC<SearchProps> = ({
 
   return (
     <div className="relative w-full max-w-md mx-auto">
-      <form
-        onSubmit={handleSubmit}
-        className={`relative transition-all duration-300 ${isFocused ? 'scale-[1.01]' : 'scale-100'
-          }`}
-      >
-        <div className="relative">
-          <SearchIcon
-            className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 ${isFocused ? 'text-primary' : 'text-muted-foreground'
-              }`}
-            size={18}
-          />
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={handleInputChange}
-            onFocus={() => {
-              setIsFocused(true);
-              if (query.length > 0) {
-                setShowSuggestions(true);
-              }
-            }}
-            onBlur={() => setIsFocused(false)}
-            placeholder="Search for hotels by city, address or name..."
-            className="w-full pl-10 pr-10 py-3 rounded-xl border border-border bg-background focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-300 focus-visible:outline-none"
-          />
-          {query && (
-            <button
-              type="button"
-              onClick={clearSearch}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors duration-200"
-            >
-              <X size={16} />
-            </button>
-          )}
-        </div>
-      </form>
+      <div className='flex flex-col sm:flex-row justify-between items-center gap-5 w-full'>
+        <form
+          onSubmit={handleSubmit}
+          className={`relative transition-all w-full duration-300 ${isFocused ? 'scale-[1.01]' : 'scale-100'
+            }`}
+        >
+          <div className="relative">
+            <SearchIcon
+              className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-300 ${isFocused ? 'text-primary' : 'text-muted-foreground'
+                }`}
+              size={18}
+            />
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={handleInputChange}
+              onFocus={() => {
+                setIsFocused(true);
+                if (query.length > 0) {
+                  setShowSuggestions(true);
+                }
+              }}
+              onBlur={() => setIsFocused(false)}
+              placeholder="Search for hotels by city, address or name..."
+              className="w-full pl-10 pr-10 py-2 rounded-xl border border-border bg-background focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-300 focus-visible:outline-none"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={clearSearch}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors duration-200"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+        </form>
 
-      {/* Near Me button */}
-      <button
-        onClick={onNearMeClick}
-        className="absolute right-[-120px] top-0 h-full flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-colors"
-      >
-        <Navigation size={16} />
-        <span>Near Me</span>
-      </button>
-
+        {/* Near Me button */}
+        <button
+          onClick={onNearMeClick}
+          className="h-full w-full sm:w-44 flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-colors"
+        >
+          <Navigation size={16} />
+          <span>Near Me</span>
+        </button>
+      </div>
       {/* Radius filter slider */}
       {showRadiusFilter && (
         <div className="mt-4 px-2">
