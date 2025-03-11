@@ -6,54 +6,40 @@ import { Hotel } from '@/types/Hotel';
 
 interface SearchSectionProps {
   searchQuery: string;
-  selectedState: string | null;
-  states: string[];
+  cities: string[];
+  addresses: string[];
   hotelNames: string[];
-  stateHotelCounts: Record<string, number>;
-  hotels: Hotel[];
-  handleSearch: (query: string) => void;
-  handleStateFilter: (state: string) => void;
-  handleLocationSelect: (location: string) => void;
+  radius: number;
+  onSearch: (query: string) => void;
+  onLocationSelect: (location: string) => void;
+  onRadiusChange: (radius: number) => void;
+  onNearMeClick: () => void;
 }
 
 const SearchSection: React.FC<SearchSectionProps> = ({
   searchQuery,
-  selectedState,
-  states,
+  cities,
+  addresses,
   hotelNames,
-  stateHotelCounts,
-  hotels,
-  handleSearch,
-  handleStateFilter,
-  handleLocationSelect,
+  radius,
+  onSearch,
+  onLocationSelect,
+  onRadiusChange,
+  onNearMeClick
 }) => {
-  // Extract unique addresses from hotels
-  const addresses = hotels.map(hotel => `${hotel.address} (${hotel.name})`);
-  // const hotelNames = hotels.map(hotel => `${hotel.name}`);
-
   return (
     <div className="animate-on-mount mb-6 opacity-0 transform translate-y-4 transition-all duration-700 relative z-10" style={{ transitionDelay: '200ms' }}>
       <Search 
-        onSearch={handleSearch}
+        onSearch={onSearch}
         searchQuery={searchQuery}
-        states={states}
+        cities={cities}
         addresses={addresses}
         hotelNames={hotelNames}
-        onLocationSelect={handleLocationSelect}
+        onLocationSelect={onLocationSelect}
+        onRadiusChange={onRadiusChange}
+        radius={radius}
+        onNearMeClick={onNearMeClick}
       />
-      
-      {/* State filters */}
-      <div className="flex flex-wrap gap-2 mt-4">
-        {states.map((state) => (
-          <FilterChip
-            key={state}
-            label={state}
-            isSelected={selectedState === state}
-            onClick={() => handleStateFilter(state)}
-            count={stateHotelCounts[state]}
-          />
-        ))}
-      </div>
     </div>
   );
 };

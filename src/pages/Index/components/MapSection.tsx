@@ -5,28 +5,34 @@ import { Hotel } from '@/types/Hotel';
 
 interface MapSectionProps {
   hotels: Hotel[];
+  filteredHotels: Hotel[];
   searchQuery: string;
-  selectedState: string | null;
-  onHotelSelect: (hotel: Hotel) => void;
   focusLocation: string | null;
+  radius: number;
+  onHotelSelect: (hotel: Hotel) => void;
+  userLocation: [number, number] | null;
 }
 
 const MapSection: React.FC<MapSectionProps> = ({
   hotels,
+  filteredHotels,
   searchQuery,
-  selectedState,
+  focusLocation,
+  radius,
   onHotelSelect,
-  focusLocation
+  userLocation
 }) => {
   return (
-    <div className="lg:col-span-2 animate-on-mount opacity-0 transform translate-y-4 transition-all duration-700 " style={{ transitionDelay: '300ms' }}>
+    <div className="lg:col-span-2 animate-on-mount opacity-0 transform translate-y-4 transition-all duration-700" style={{ transitionDelay: '300ms' }}>
       <div className="h-[500px] md:h-[600px] rounded-2xl overflow-hidden">
         <Map 
-          hotels={hotels} 
+          hotels={hotels}
+          filteredHotels={filteredHotels}
           searchQuery={searchQuery}
-          selectedState={selectedState}
-          onHotelSelect={onHotelSelect}
           focusLocation={focusLocation}
+          radius={radius}
+          onHotelSelect={onHotelSelect}
+          userLocation={userLocation}
         />
       </div>
     </div>

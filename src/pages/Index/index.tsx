@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import hotelData from '@/data/hotels.json';
 import { Hotel } from '@/types/Hotel';
 import { toast } from '@/components/ui/use-toast';
@@ -8,58 +9,113 @@ import MapSection from './components/MapSection';
 import HotelSidebar from './components/HotelSidebar';
 import AllHotelsSection from './components/AllHotelsSection';
 import Footer from './components/Footer';
+import { calculateDistance } from '@/utils/locationUtils';
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedState, setSelectedState] = useState<string | null>(null);
   const [selectedHotel, setSelectedHotel] = useState<Hotel | null>(null);
   const [showHotelDetail, setShowHotelDetail] = useState(false);
   const [focusLocation, setFocusLocation] = useState<string | null>(null);
+  const [searchRadius, setSearchRadius] = useState<number>(10);
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [hotelsWithDistance, setHotelsWithDistance] = useState<(Hotel & { distance?: number })[]>([]);
+  
   const hotels = useMemo(() => hotelData.hotels as Hotel[], []);
 
-  // Get unique states from hotels
-  const states = useMemo(() => {
-    const stateSet = new Set(hotels.map(hotel => hotel.state));
-    return Array.from(stateSet);
+  // Get unique cities from hotels
+  const cities = useMemo(() => {
+    const citySet = new Set(hotels.map(hotel => hotel.city));
+    return Array.from(citySet);
   }, [hotels]);
 
-  // Count hotels by state
-  const stateHotelCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    hotels.forEach(hotel => {
-      counts[hotel.state] = (counts[hotel.state] || 0) + 1;
-    });
-    return counts;
+  // Extract addresses from hotels
+  const addresses = useMemo(() => {
+    return hotels.map(hotel => `${hotel.address}`);
   }, [hotels]);
 
-  // Filter hotels based on search query and selected state
+  // Extract hotel names
+  const hotelNames = useMemo(() => {
+    return hotels.map(hotel => `${hotel.name.trim()}`);
+  }, [hotels]);
+
+  // Calculate distances when user location changes
+  useEffect(() => {
+    if (userLocation) {
+      const hotelsWithDist = hotels.map(hotel => ({
+        ...hotel,
+        distance: calculateDistance(
+          userLocation[0], 
+          userLocation[1], 
+          hotel.coordinates[0], 
+          hotel.coordinates[1]
+        )
+      }));
+      setHotelsWithDistance(hotelsWithDist);
+    } else {
+      setHotelsWithDistance(hotels);
+    }
+  }, [hotels, userLocation]);
+
+  // Filter hotels based on search query and radius
   const filteredHotels = useMemo(() => {
-    return hotels.filter(hotel => {
-      const matchesSearch = searchQuery ? 
+    let filtered = hotelsWithDistance;
+    
+    // Filter by search query
+    if (searchQuery) {
+      filtered = filtered.filter(hotel => 
         hotel.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        hotel.state.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        hotel.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        hotel.address.toLowerCase().includes(searchQuery.toLowerCase()) : true;
-      
-      const matchesState = selectedState ? hotel.state === selectedState : true;
-      
-      return matchesSearch && matchesState;
-    });
-  }, [hotels, searchQuery, selectedState]);
+        hotel.city.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        hotel.address.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    
+    // Filter by distance if we have a search center
+    if ((searchQuery || userLocation) && filtered.some(h => h.distance !== undefined)) {
+      filtered = filtered.filter(hotel => 
+        hotel.distance !== undefined && hotel.distance <= searchRadius
+      );
+    }
+    
+    return filtered;
+  }, [hotelsWithDistance, searchQuery, searchRadius, userLocation]);
+
+  // Sort hotels by distance when in "Near Me" mode
+  const sortedHotels = useMemo(() => {
+    if (userLocation) {
+      return [...filteredHotels].sort((a, b) => {
+        return (a.distance || Infinity) - (b.distance || Infinity);
+      });
+    }
+    return filteredHotels;
+  }, [filteredHotels, userLocation]);
 
   // Handle search
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     
-    // If the query exactly matches a state name, set it as selected state
-    const matchingState = states.find(
-      state => state.toLowerCase() === query.toLowerCase()
-    );
-    
-    if (matchingState) {
-      setSelectedState(matchingState);
-    } else if (!query) {
-      setSelectedState(null);
+    // If searching for a city, find its coordinates and set as search center
+    if (query) {
+      const cityMatch = hotels.find(hotel => 
+        hotel.city.toLowerCase() === query.toLowerCase()
+      );
+      
+      if (cityMatch) {
+        // Use the city's coordinates as the search center
+        setUserLocation(null); // Clear user location to focus on search
+      } else {
+        // If it's not a city, look for exact hotel or address match
+        const exactMatch = hotels.find(hotel => 
+          hotel.name.toLowerCase() === query.toLowerCase() ||
+          hotel.address.toLowerCase().includes(query.toLowerCase())
+        );
+        
+        if (exactMatch) {
+          setUserLocation(null); // Clear user location to focus on search
+        }
+      }
+    } else {
+      // If query is cleared, reset
+      setUserLocation(null);
     }
   };
 
@@ -80,15 +136,47 @@ const Index = () => {
     }, 2000);
   };
 
-  // Handle state filter click
-  const handleStateFilter = (state: string) => {
-    if (selectedState === state) {
-      setSelectedState(null);
+  // Handle Near Me button click
+  const handleNearMe = useCallback(() => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const userCoords: [number, number] = [
+            position.coords.latitude,
+            position.coords.longitude
+          ];
+          setUserLocation(userCoords);
+          setSearchQuery('');
+          
+          toast({
+            title: "Location detected",
+            description: "Showing hotels near your current location",
+            duration: 3000,
+          });
+        },
+        (error) => {
+          console.error(error);
+          toast({
+            title: "Location error",
+            description: "Unable to get your location. Please check permissions.",
+            variant: "destructive",
+            duration: 5000,
+          });
+        }
+      );
     } else {
-      setSelectedState(state);
-      setSearchQuery(state);
-      setFocusLocation(state); // Also focus the map on the selected state
+      toast({
+        title: "Not supported",
+        description: "Geolocation is not supported by your browser",
+        variant: "destructive",
+        duration: 5000,
+      });
     }
+  }, []);
+
+  // Handle radius change
+  const handleRadiusChange = (radius: number) => {
+    setSearchRadius(radius);
   };
 
   // Handle hotel selection
@@ -123,13 +211,14 @@ const Index = () => {
         {/* Search and filters section */}
         <SearchSection 
           searchQuery={searchQuery}
-          selectedState={selectedState}
-          states={states}
-          stateHotelCounts={stateHotelCounts}
-          hotels={hotels}
-          handleSearch={handleSearch}
-          handleStateFilter={handleStateFilter}
-          handleLocationSelect={handleLocationSelect}
+          cities={cities}
+          addresses={addresses}
+          hotelNames={hotelNames}
+          radius={searchRadius}
+          onSearch={handleSearch}
+          onLocationSelect={handleLocationSelect}
+          onRadiusChange={handleRadiusChange}
+          onNearMeClick={handleNearMe}
         />
 
         {/* Content layout */}
@@ -137,18 +226,20 @@ const Index = () => {
           {/* Map section */}
           <MapSection 
             hotels={hotels}
+            filteredHotels={sortedHotels}
             searchQuery={searchQuery}
-            selectedState={selectedState}
             focusLocation={focusLocation}
+            radius={searchRadius}
             onHotelSelect={handleHotelSelect}
+            userLocation={userLocation}
           />
 
           {/* Sidebar - Hotel results */}
           <HotelSidebar 
-            filteredHotels={filteredHotels}
-            selectedState={selectedState}
+            filteredHotels={sortedHotels}
             selectedHotel={selectedHotel}
             onHotelSelect={handleHotelSelect}
+            userLocation={userLocation}
           />
         </div>
 
