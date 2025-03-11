@@ -132,6 +132,19 @@
       "coordinates": [18.7522, 73.4012]
     },
     {
+      "id": "mh011",
+      "name": "Four Points by Sheraton Nashik",
+      "state": "Maharashtra",
+      "city": "Nashik",
+      "address": "Yashika Plaza, Plot No.2 S No. 804/A, behind Satyam Sweets, Mumbai Naka, Govind Nagar, Nashik, Maharashtra 422009",
+      "description": "An eco-resort offering unique tree house accommodations, offering stunning views of the Western Ghats and immersive forest experiences.",
+      "rating": 4.6,
+      "price": 12000,
+      "amenities": ["Wi-Fi", "Nature Trails", "Breakfast", "Mountain View", "Eco-friendly"],
+      "images": ["https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?q=80&w=1000&auto=format&fit=crop"],
+      "coordinates": [19.98211331464982, 73.78157937334235]
+    },
+    {
       "id": "dl001",
       "name": "The Lodhi",
       "state": "Delhi",
@@ -780,6 +793,32 @@
       "amenities": ["Swimming Pool", "Spa", "Wi-Fi", "Restaurant", "Bar", "Gym"],
       "images": ["https://images.unsplash.com/photo-1564501049412-61c2a3083791?q=80&w=1000&auto=format&fit=crop"],
       "coordinates": [22.3102, 73.1739]
+    },
+    {
+      "id": "rj001",
+      "name": "Ratnakar Dhaba",
+      "state": "Rajasthan",
+      "city": "Jaipur",
+      "address": "Bhawani Singh Rd, Rambagh, Jaipur, Rajasthan 302005",
+      "description": "A premium hotel offering elegant rooms, fine dining options, and modern amenities for discerning travelers.",
+      "rating": 4.5,
+      "price": 10000,
+      "amenities": ["Swimming Pool", "Spa", "Wi-Fi", "Restaurant", "Bar", "Gym"],
+      "images": ["https://images.unsplash.com/photo-1564501049412-61c2a3083791?q=80&w=1000&auto=format&fit=crop"],
+      "coordinates": [26.898159, 75.808140]
+    },
+    {
+      "id": "001",
+      "name": "The Lodge & Spa at Brush Creek Ranch",
+      "state": "Wyoming",
+      "city": "Saratoga",
+      "address": "66 Brush Creek Ranch Road, Saratoga, WY 82331, United States",
+      "description": "A premium hotel offering elegant rooms, fine dining options, and modern amenities for discerning travelers.",
+      "rating": 4.5,
+      "price": 10000,
+      "amenities": ["Swimming Pool", "Spa", "Wi-Fi", "Restaurant", "Bar", "Gym"],
+      "images": ["https://images.unsplash.com/photo-1564501049412-61c2a3083791?q=80&w=1000&auto=format&fit=crop"],
+      "coordinates": [41.3321357133551, -106.60662237380076]
     }
   ]
 }

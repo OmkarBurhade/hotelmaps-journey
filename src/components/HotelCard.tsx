@@ -12,7 +12,7 @@ interface HotelCardProps {
 
 const HotelCard: React.FC<HotelCardProps> = ({ hotel, onClick, isSelected }) => {
   return (
-    <div 
+    <div
       className={cn(
         "group relative overflow-hidden rounded-xl border border-border/50 bg-card transition-all duration-300 hover:shadow-md cursor-pointer",
         isSelected ? "ring-2 ring-primary shadow-md scale-[1.01]" : "hover:scale-[1.02]"
@@ -22,15 +22,15 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onClick, isSelected }) => 
       {/* Image container with gradient overlay */}
       <div className="relative overflow-hidden h-48">
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent z-10"></div>
-        <img 
-          src={hotel.images[0]} 
-          alt={hotel.name} 
+        <img
+          src={hotel.images[0]}
+          alt={hotel.name}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
         />
         <div className="absolute bottom-3 left-3 z-20 flex flex-col">
           <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-black/40 backdrop-blur-sm text-white text-xs font-medium">
-            <Star size={12} className="fill-yellow-400 text-yellow-400" /> 
+            <Star size={12} className="fill-yellow-400 text-yellow-400" />
             {hotel.rating}
           </span>
         </div>
@@ -40,7 +40,7 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onClick, isSelected }) => 
           </span>
         </div>
       </div>
-      
+
       {/* Content */}
       <div className="p-4">
         <div className="flex items-start justify-between">
@@ -52,15 +52,15 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onClick, isSelected }) => 
             </div>
           </div>
         </div>
-        
+
         <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
           {hotel.description}
         </p>
-        
+
         {/* Amenities */}
         <div className="mt-3 flex flex-wrap gap-1.5">
           {hotel.amenities.slice(0, 3).map((amenity, index) => (
-            <span 
+            <span
               key={index}
               className="px-2 py-0.5 text-xs font-medium rounded-full bg-secondary text-secondary-foreground"
             >

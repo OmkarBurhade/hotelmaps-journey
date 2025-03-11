@@ -26,7 +26,12 @@ const Index = () => {
 
   // Extract addresses from hotels
   const addresses = useMemo(() => {
-    return hotels.map(hotel => `${hotel.address}, ${hotel.city}, ${hotel.state}`);
+    return hotels.map(hotel => `${hotel.address}`);
+  }, [hotels]);
+
+  // Extract addresses from hotels
+  const hotelNames = useMemo(() => {
+    return hotels.map(hotel => ` ${hotel.name}`);
   }, [hotels]);
 
   // Count hotels by state
@@ -142,12 +147,13 @@ const Index = () => {
       {/* Main content */}
       <main className="container mx-auto max-w-6xl px-4 pb-16">
         {/* Search and filters section */}
-        <div className="animate-on-mount mb-6 opacity-0 transform translate-y-4 transition-all duration-700" style={{ transitionDelay: '200ms' }}>
+        <div className="animate-on-mount mb-6 opacity-0 transform translate-y-4 transition-all duration-700 relative z-10" style={{ transitionDelay: '200ms' }}>
           <Search 
             onSearch={handleSearch}
             searchQuery={searchQuery}
             states={states}
             addresses={addresses}
+            hotelNames={hotelNames}
             onLocationSelect={handleLocationSelect}
           />
           

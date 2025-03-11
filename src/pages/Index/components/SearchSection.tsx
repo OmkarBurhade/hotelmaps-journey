@@ -8,6 +8,7 @@ interface SearchSectionProps {
   searchQuery: string;
   selectedState: string | null;
   states: string[];
+  hotelNames: string[];
   stateHotelCounts: Record<string, number>;
   hotels: Hotel[];
   handleSearch: (query: string) => void;
@@ -19,6 +20,7 @@ const SearchSection: React.FC<SearchSectionProps> = ({
   searchQuery,
   selectedState,
   states,
+  hotelNames,
   stateHotelCounts,
   hotels,
   handleSearch,
@@ -27,14 +29,16 @@ const SearchSection: React.FC<SearchSectionProps> = ({
 }) => {
   // Extract unique addresses from hotels
   const addresses = hotels.map(hotel => `${hotel.address} (${hotel.name})`);
+  // const hotelNames = hotels.map(hotel => `${hotel.name}`);
 
   return (
-    <div className="animate-on-mount mb-6 opacity-0 transform translate-y-4 transition-all duration-700" style={{ transitionDelay: '200ms' }}>
+    <div className="animate-on-mount mb-6 opacity-0 transform translate-y-4 transition-all duration-700 relative z-10" style={{ transitionDelay: '200ms' }}>
       <Search 
         onSearch={handleSearch}
         searchQuery={searchQuery}
         states={states}
         addresses={addresses}
+        hotelNames={hotelNames}
         onLocationSelect={handleLocationSelect}
       />
       

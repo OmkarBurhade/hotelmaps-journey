@@ -19,7 +19,7 @@ const MapSection: React.FC<MapSectionProps> = ({
   focusLocation
 }) => {
   return (
-    <div className="lg:col-span-2 animate-on-mount opacity-0 transform translate-y-4 transition-all duration-700" style={{ transitionDelay: '300ms' }}>
+    <div className="lg:col-span-2 animate-on-mount opacity-0 transform translate-y-4 transition-all duration-700 " style={{ transitionDelay: '300ms' }}>
       <div className="h-[500px] md:h-[600px] rounded-2xl overflow-hidden">
         <Map 
           hotels={hotels} 

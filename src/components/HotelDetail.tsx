@@ -76,11 +76,11 @@ const HotelDetail: React.FC<HotelDetailProps> = ({ hotel, onClose }) => {
             </div>
           </div>
 
-          <div className="mt-6">
+          {/* <div className="mt-6">
             <h3 className="text-lg font-medium mb-3">Location</h3>
             <div className="h-48 rounded-lg overflow-hidden border border-border">
               <img 
-                src={`https://maps.googleapis.com/maps/api/staticmap?center=${hotel.coordinates[0]},${hotel.coordinates[1]}&zoom=14&size=600x200&markers=color:red%7C${hotel.coordinates[0]},${hotel.coordinates[1]}&key=YOUR_API_KEY`} 
+                src={`https://maps.googleapis.com/maps/api/staticmap?center=${hotel.coordinates[0]},${hotel.coordinates[1]}&zoom=14&size=600x200&markers=color:red%7C${hotel.coordinates[0]},${hotel.coordinates[1]}&key=AIzaSyBPHVKb1A3UK_cXFajCVwLIJfAGtuSKLMM`}
                 alt="Hotel location" 
                 className="w-full h-full object-cover opacity-60"
               />
@@ -88,7 +88,7 @@ const HotelDetail: React.FC<HotelDetailProps> = ({ hotel, onClose }) => {
                 <p className="text-muted-foreground">Map preview requires API key</p>
               </div>
             </div>
-          </div>
+          </div> */}  
         </div>
 
         {/* Footer */}
