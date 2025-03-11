@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Search from '@/components/Search';
 import Map from '@/components/Map';
 import HotelCard from '@/components/HotelCard';
@@ -7,21 +7,46 @@ import HotelDetail from '@/components/HotelDetail';
 import FilterChip from '@/components/FilterChip';
 import hotelData from '@/data/hotels.json';
 import { Hotel } from '@/types/Hotel';
-import { MapPin } from 'lucide-react';
+import { MapPin, Navigation } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
+
+// Function to calculate distance between two coordinates
+function calculateDistance(
+  lat1: number, 
+  lon1: number, 
+  lat2: number, 
+  lon2: number
+): number {
+  const R = 6371; // Radius of the earth in km
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c; // Distance in km
+}
+
+function deg2rad(deg: number): number {
+  return deg * (Math.PI / 180);
+}
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedState, setSelectedState] = useState<string | null>(null);
   const [selectedHotel, setSelectedHotel] = useState<Hotel | null>(null);
   const [showHotelDetail, setShowHotelDetail] = useState(false);
   const [focusLocation, setFocusLocation] = useState<string | null>(null);
+  const [searchRadius, setSearchRadius] = useState<number>(10);
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [hotelsWithDistance, setHotelsWithDistance] = useState<(Hotel & { distance?: number })[]>([]);
+  
   const hotels = useMemo(() => hotelData.hotels as Hotel[], []);
 
-  // Get unique states from hotels
-  const states = useMemo(() => {
-    const stateSet = new Set(hotels.map(hotel => hotel.state));
-    return Array.from(stateSet);
+  // Get unique cities from hotels
+  const cities = useMemo(() => {
+    const citySet = new Set(hotels.map(hotel => hotel.city));
+    return Array.from(citySet);
   }, [hotels]);
 
   // Extract addresses from hotels
@@ -29,48 +54,89 @@ const Index = () => {
     return hotels.map(hotel => `${hotel.address}`);
   }, [hotels]);
 
-  // Extract addresses from hotels
+  // Extract hotel names
   const hotelNames = useMemo(() => {
-    return hotels.map(hotel => ` ${hotel.name}`);
+    return hotels.map(hotel => `${hotel.name.trim()}`);
   }, [hotels]);
 
-  // Count hotels by state
-  const stateHotelCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    hotels.forEach(hotel => {
-      counts[hotel.state] = (counts[hotel.state] || 0) + 1;
-    });
-    return counts;
-  }, [hotels]);
+  // Calculate distances when user location changes
+  useEffect(() => {
+    if (userLocation) {
+      const hotelsWithDist = hotels.map(hotel => ({
+        ...hotel,
+        distance: calculateDistance(
+          userLocation[0], 
+          userLocation[1], 
+          hotel.coordinates[0], 
+          hotel.coordinates[1]
+        )
+      }));
+      setHotelsWithDistance(hotelsWithDist);
+    } else {
+      setHotelsWithDistance(hotels);
+    }
+  }, [hotels, userLocation]);
 
-  // Filter hotels based on search query and selected state
+  // Filter hotels based on search query and radius
   const filteredHotels = useMemo(() => {
-    return hotels.filter(hotel => {
-      const matchesSearch = searchQuery ? 
+    let filtered = hotelsWithDistance;
+    
+    // Filter by search query
+    if (searchQuery) {
+      filtered = filtered.filter(hotel => 
         hotel.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        hotel.state.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        hotel.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        hotel.address.toLowerCase().includes(searchQuery.toLowerCase()) : true;
-      
-      const matchesState = selectedState ? hotel.state === selectedState : true;
-      
-      return matchesSearch && matchesState;
-    });
-  }, [hotels, searchQuery, selectedState]);
+        hotel.city.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        hotel.address.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    
+    // Filter by distance if we have a search center
+    if ((searchQuery || userLocation) && filtered.some(h => h.distance !== undefined)) {
+      filtered = filtered.filter(hotel => 
+        hotel.distance !== undefined && hotel.distance <= searchRadius
+      );
+    }
+    
+    return filtered;
+  }, [hotelsWithDistance, searchQuery, searchRadius, userLocation]);
+
+  // Sort hotels by distance when in "Near Me" mode
+  const sortedHotels = useMemo(() => {
+    if (userLocation) {
+      return [...filteredHotels].sort((a, b) => {
+        return (a.distance || Infinity) - (b.distance || Infinity);
+      });
+    }
+    return filteredHotels;
+  }, [filteredHotels, userLocation]);
 
   // Handle search
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    
-    // If the query exactly matches a state name, set it as selected state
-    const matchingState = states.find(
-      state => state.toLowerCase() === query.toLowerCase()
-    );
-    
-    if (matchingState) {
-      setSelectedState(matchingState);
-    } else if (!query) {
-      setSelectedState(null);
+
+    // If searching for a city, find its coordinates and set as search center
+    if (query) {
+      const cityMatch = hotels.find(hotel => 
+        hotel.city.toLowerCase() === query.toLowerCase()
+      );
+      
+      if (cityMatch) {
+        // Use the city's coordinates as the search center
+        setUserLocation(null); // Clear user location to focus on search
+      } else {
+        // If it's not a city, look for exact hotel or address match
+        const exactMatch = hotels.find(hotel => 
+          hotel.name.toLowerCase() === query.toLowerCase() ||
+          hotel.address.toLowerCase().includes(query.toLowerCase())
+        );
+        
+        if (exactMatch) {
+          setUserLocation(null); // Clear user location to focus on search
+        }
+      }
+    } else {
+      // If query is cleared, reset
+      setUserLocation(null);
     }
   };
 
@@ -91,15 +157,47 @@ const Index = () => {
     }, 2000);
   };
 
-  // Handle state filter click
-  const handleStateFilter = (state: string) => {
-    if (selectedState === state) {
-      setSelectedState(null);
+  // Handle Near Me button click
+  const handleNearMe = useCallback(() => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const userCoords: [number, number] = [
+            position.coords.latitude,
+            position.coords.longitude
+          ];
+          setUserLocation(userCoords);
+          setSearchQuery('');
+          
+          toast({
+            title: "Location detected",
+            description: "Showing hotels near your current location",
+            duration: 3000,
+          });
+        },
+        (error) => {
+          console.error(error);
+          toast({
+            title: "Location error",
+            description: "Unable to get your location. Please check permissions.",
+            variant: "destructive",
+            duration: 5000,
+          });
+        }
+      );
     } else {
-      setSelectedState(state);
-      setSearchQuery(state);
-      setFocusLocation(state); // Also focus the map on the selected state
+      toast({
+        title: "Not supported",
+        description: "Geolocation is not supported by your browser",
+        variant: "destructive",
+        duration: 5000,
+      });
     }
+  }, []);
+
+  // Handle radius change
+  const handleRadiusChange = (radius: number) => {
+    setSearchRadius(radius);
   };
 
   // Handle hotel selection
@@ -137,7 +235,7 @@ const Index = () => {
               Find Hotels Across India
             </h1>
             <p className="max-w-2xl text-muted-foreground">
-              Explore a curated selection of premier hotels across Maharashtra, Delhi, Gujarat, and Uttar Pradesh,
+              Explore a curated selection of premier hotels across India,
               each offering a unique experience tailored to your preferences.
             </p>
           </div>
@@ -151,24 +249,29 @@ const Index = () => {
           <Search 
             onSearch={handleSearch}
             searchQuery={searchQuery}
-            states={states}
+            cities={cities}
             addresses={addresses}
             hotelNames={hotelNames}
             onLocationSelect={handleLocationSelect}
+            onRadiusChange={handleRadiusChange}
+            radius={searchRadius}
+            onNearMeClick={handleNearMe}
           />
           
-          {/* State filters */}
-          <div className="flex flex-wrap gap-2 mt-4">
-            {states.map((state) => (
-              <FilterChip
-                key={state}
-                label={state}
-                isSelected={selectedState === state}
-                onClick={() => handleStateFilter(state)}
-                count={stateHotelCounts[state]}
-              />
-            ))}
-          </div>
+          {/* Current filter indicator */}
+          {userLocation && (
+            <div className="flex items-center gap-2 mt-4 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm w-fit">
+              <Navigation size={14} />
+              <span>Showing hotels within {searchRadius} km of your location</span>
+            </div>
+          )}
+          
+          {searchQuery && (
+            <div className="flex items-center gap-2 mt-4 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm w-fit">
+              <MapPin size={14} />
+              <span>Showing hotels near "{searchQuery}" within {searchRadius} km</span>
+            </div>
+          )}
         </div>
 
         {/* Content layout */}
@@ -177,11 +280,13 @@ const Index = () => {
           <div className="lg:col-span-2 animate-on-mount opacity-0 transform translate-y-4 transition-all duration-700" style={{ transitionDelay: '300ms' }}>
             <div className="h-[500px] md:h-[600px] rounded-2xl overflow-hidden">
               <Map 
-                hotels={hotels} 
+                hotels={hotels}
+                filteredHotels={sortedHotels}
                 searchQuery={searchQuery}
-                selectedState={selectedState}
-                onHotelSelect={handleHotelSelect}
                 focusLocation={focusLocation}
+                radius={searchRadius}
+                onHotelSelect={handleHotelSelect}
+                userLocation={userLocation}
               />
             </div>
           </div>
@@ -193,24 +298,31 @@ const Index = () => {
                 <div className="flex items-center justify-between">
                   <h2 className="font-medium">Hotels</h2>
                   <span className="text-sm text-muted-foreground">
-                    {filteredHotels.length} results
+                    {sortedHotels.length} results
                   </span>
                 </div>
-                {selectedState && (
+                {userLocation && (
+                  <div className="flex items-center mt-2 text-sm text-muted-foreground">
+                    <Navigation size={14} className="mr-1" />
+                    <span>Near your location</span>
+                  </div>
+                )}
+                {searchQuery && !userLocation && (
                   <div className="flex items-center mt-2 text-sm text-muted-foreground">
                     <MapPin size={14} className="mr-1" />
-                    <span>{selectedState}</span>
+                    <span>Near {searchQuery}</span>
                   </div>
                 )}
               </div>
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {filteredHotels.length > 0 ? (
-                  filteredHotels.map((hotel) => (
+                {sortedHotels.length > 0 ? (
+                  sortedHotels.map((hotel) => (
                     <HotelCard
                       key={hotel.id}
                       hotel={hotel}
                       onClick={handleHotelSelect}
                       isSelected={selectedHotel?.id === hotel.id}
+                      distance={hotel.distance}
                     />
                   ))
                 ) : (
@@ -220,7 +332,7 @@ const Index = () => {
                     </div>
                     <h3 className="text-lg font-medium mb-1">No hotels found</h3>
                     <p className="text-sm text-muted-foreground max-w-xs">
-                      Try adjusting your search or filters to find what you're looking for.
+                      Try adjusting your search or increasing the radius to find more hotels.
                     </p>
                   </div>
                 )}
@@ -233,14 +345,18 @@ const Index = () => {
         <div className="mt-8 animate-on-mount opacity-0 transform translate-y-4 transition-all duration-700" style={{ transitionDelay: '500ms' }}>
           <h2 className="text-2xl font-bold mb-6">All Hotels</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {hotels.map((hotel) => (
-              <HotelCard
-                key={hotel.id}
-                hotel={hotel}
-                onClick={handleHotelSelect}
-                isSelected={selectedHotel?.id === hotel.id}
-              />
-            ))}
+            {hotels.map((hotel) => {
+              const hotelWithDist = hotelsWithDistance.find(h => h.id === hotel.id);
+              return (
+                <HotelCard
+                  key={hotel.id}
+                  hotel={hotel}
+                  onClick={handleHotelSelect}
+                  isSelected={selectedHotel?.id === hotel.id}
+                  distance={hotelWithDist?.distance}
+                />
+              );
+            })}
           </div>
         </div>
       </main>

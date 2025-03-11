@@ -8,9 +8,10 @@ interface HotelCardProps {
   hotel: Hotel;
   onClick: (hotel: Hotel) => void;
   isSelected: boolean;
+  distance?: number; // Optional distance from current location/search point
 }
 
-const HotelCard: React.FC<HotelCardProps> = ({ hotel, onClick, isSelected }) => {
+const HotelCard: React.FC<HotelCardProps> = ({ hotel, onClick, isSelected, distance }) => {
   return (
     <div
       className={cn(
@@ -48,7 +49,7 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onClick, isSelected }) => 
             <h3 className="font-medium text-lg line-clamp-1">{hotel.name}</h3>
             <div className="flex items-center text-muted-foreground mt-1">
               <MapPin size={14} className="mr-1" />
-              <p className="text-sm line-clamp-1">{hotel.city}, {hotel.state}</p>
+              <p className="text-sm line-clamp-1">{hotel.city}</p>
             </div>
           </div>
         </div>
@@ -56,6 +57,13 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onClick, isSelected }) => 
         <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
           {hotel.description}
         </p>
+
+        {/* Show distance if provided */}
+        {distance !== undefined && (
+          <div className="mt-2 text-sm font-medium text-primary">
+            {distance < 1 ? `${Math.round(distance * 1000)} meters away` : `${distance.toFixed(1)} km away`}
+          </div>
+        )}
 
         {/* Amenities */}
         <div className="mt-3 flex flex-wrap gap-1.5">

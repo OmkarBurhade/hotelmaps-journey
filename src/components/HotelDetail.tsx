@@ -1,10 +1,10 @@
 
 import React from 'react';
-import { X, Star, MapPin, Wifi, Coffee, Dumbbell, Utensils, Waves } from 'lucide-react';
+import { X, Star, MapPin, Wifi, Coffee, Dumbbell, Utensils, Waves, Navigation } from 'lucide-react';
 import { Hotel } from '../types/Hotel';
 
 interface HotelDetailProps {
-  hotel: Hotel;
+  hotel: Hotel & { distance?: number };
   onClose: () => void;
 }
 
@@ -46,7 +46,7 @@ const HotelDetail: React.FC<HotelDetailProps> = ({ hotel, onClose }) => {
             <h2 className="text-white text-2xl font-semibold">{hotel.name}</h2>
             <div className="flex items-center text-white/90 mt-1">
               <MapPin size={16} className="mr-1" />
-              <p className="text-sm">{hotel.address}</p>
+              <p className="text-sm">{hotel.city}</p>
             </div>
           </div>
         </div>
@@ -58,7 +58,23 @@ const HotelDetail: React.FC<HotelDetailProps> = ({ hotel, onClose }) => {
               <h3 className="text-lg font-medium">About</h3>
               <span className="text-lg font-semibold">₹{hotel.price.toLocaleString()}<span className="text-sm text-muted-foreground">/night</span></span>
             </div>
+            
+            {/* Show distance if available */}
+            {hotel.distance !== undefined && (
+              <div className="mb-3 flex items-center text-primary font-medium">
+                <Navigation size={16} className="mr-1" />
+                {hotel.distance < 1 
+                  ? `${Math.round(hotel.distance * 1000)} meters away` 
+                  : `${hotel.distance.toFixed(1)} km away`}
+              </div>
+            )}
+            
             <p className="text-muted-foreground">{hotel.description}</p>
+          </div>
+
+          <div className="mt-4">
+            <h3 className="text-lg font-medium mb-2">Address</h3>
+            <p className="text-muted-foreground">{hotel.address}</p>
           </div>
 
           <div className="mt-6">
@@ -75,20 +91,6 @@ const HotelDetail: React.FC<HotelDetailProps> = ({ hotel, onClose }) => {
               ))}
             </div>
           </div>
-
-          {/* <div className="mt-6">
-            <h3 className="text-lg font-medium mb-3">Location</h3>
-            <div className="h-48 rounded-lg overflow-hidden border border-border">
-              <img 
-                src={`https://maps.googleapis.com/maps/api/staticmap?center=${hotel.coordinates[0]},${hotel.coordinates[1]}&zoom=14&size=600x200&markers=color:red%7C${hotel.coordinates[0]},${hotel.coordinates[1]}&key=AIzaSyBPHVKb1A3UK_cXFajCVwLIJfAGtuSKLMM`}
-                alt="Hotel location" 
-                className="w-full h-full object-cover opacity-60"
-              />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <p className="text-muted-foreground">Map preview requires API key</p>
-              </div>
-            </div>
-          </div> */}  
         </div>
 
         {/* Footer */}

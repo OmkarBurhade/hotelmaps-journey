@@ -1,48 +1,55 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Search as SearchIcon, MapPin, Building, X } from 'lucide-react';
+import { Search as SearchIcon, MapPin, Building, X, Navigation } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
 
 interface SearchProps {
   onSearch: (query: string) => void;
   searchQuery: string;
-  states: string[];
+  cities: string[];
   addresses: string[];
   hotelNames: string[];
   onLocationSelect?: (location: string) => void;
+  onRadiusChange: (radius: number) => void;
+  radius: number;
+  onNearMeClick: () => void;
 }
 
 const Search: React.FC<SearchProps> = ({
   onSearch,
   searchQuery,
-  states,
+  cities,
   addresses,
   hotelNames,
-  onLocationSelect
+  onLocationSelect,
+  onRadiusChange,
+  radius,
+  onNearMeClick
 }) => {
   const [query, setQuery] = useState(searchQuery);
   const [isFocused, setIsFocused] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showRadiusFilter, setShowRadiusFilter] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
-
-  // Filter states based on input query
-  const filteredStates = states.filter(
-    state => state.toLowerCase().includes(query.toLowerCase())
+  // Filter cities based on input query
+  const filteredCities = cities.filter(
+    city => city.toLowerCase().includes(query.toLowerCase())
   ).slice(0, 3);
 
   // Filter addresses based on input query
   const filteredAddresses = addresses.filter(
     address => address.toLowerCase().includes(query.toLowerCase())
   ).slice(0, 2);
-  // Filter Name based on input query
-  const filteredName = hotelNames.filter(
+  
+  // Filter hotel names based on input query
+  const filteredNames = hotelNames.filter(
     name => name.toLowerCase().includes(query.toLowerCase())
   ).slice(0, 3);
-  console.log("name:-", filteredName);
 
   // Combine suggestions
-  const combinedSuggestions = [...filteredStates, ...filteredAddresses, ...filteredName];
+  const combinedSuggestions = [...filteredCities, ...filteredAddresses, ...filteredNames];
 
   // Handle click outside to close suggestions
   useEffect(() => {
@@ -68,16 +75,18 @@ const Search: React.FC<SearchProps> = ({
     setQuery(value);
     if (value.length > 0) {
       setShowSuggestions(true);
+      setShowRadiusFilter(true);
     } else {
       setShowSuggestions(false);
+      setShowRadiusFilter(false);
       onSearch('');
     }
   };
 
-
   const handleSelectSuggestion = (suggestion: string) => {
     setQuery(suggestion);
     onSearch(suggestion);
+    setShowRadiusFilter(true);
 
     // Trigger location select to center map
     if (onLocationSelect) {
@@ -93,6 +102,7 @@ const Search: React.FC<SearchProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSearch(query);
+    setShowRadiusFilter(!!query);
 
     // Trigger location select to center map
     if (onLocationSelect && query) {
@@ -109,16 +119,20 @@ const Search: React.FC<SearchProps> = ({
     setQuery('');
     onSearch('');
     setShowSuggestions(false);
+    setShowRadiusFilter(false);
     if (inputRef.current) {
       inputRef.current.focus();
     }
   };
 
-  // Determine if a suggestion is a state or an address
-  const isSuggestionState = (suggestion: string) => {
-    return states.includes(suggestion);
+  // Determine if a suggestion is a city
+  const isSuggestionCity = (suggestion: string) => {
+    return cities.includes(suggestion);
   };
 
+  const handleRadiusChange = (value: number[]) => {
+    onRadiusChange(value[0]);
+  };
 
   return (
     <div className="relative w-full max-w-md mx-auto">
@@ -145,7 +159,7 @@ const Search: React.FC<SearchProps> = ({
               }
             }}
             onBlur={() => setIsFocused(false)}
-            placeholder="Search for hotels by location or address..."
+            placeholder="Search for hotels by city, address or name..."
             className="w-full pl-10 pr-10 py-3 rounded-xl border border-border bg-background focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-300 focus-visible:outline-none"
           />
           {query && (
@@ -160,6 +174,31 @@ const Search: React.FC<SearchProps> = ({
         </div>
       </form>
 
+      {/* Near Me button */}
+      <button
+        onClick={onNearMeClick}
+        className="absolute right-[-120px] top-0 h-full flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-colors"
+      >
+        <Navigation size={16} />
+        <span>Near Me</span>
+      </button>
+
+      {/* Radius filter slider */}
+      {showRadiusFilter && (
+        <div className="mt-4 px-2">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium">Search Radius: {radius} km</span>
+          </div>
+          <Slider
+            defaultValue={[radius]}
+            max={50}
+            min={1}
+            step={1}
+            onValueChange={handleRadiusChange}
+          />
+        </div>
+      )}
+
       {/* Search suggestions */}
       {showSuggestions && combinedSuggestions.length > 0 && (
         <div
@@ -168,14 +207,12 @@ const Search: React.FC<SearchProps> = ({
         >
           <div className="py-1">
             {combinedSuggestions.map((suggestion, index) => (
-
               <div
-
                 key={index}
                 onClick={() => handleSelectSuggestion(suggestion)}
                 className="flex items-center px-4 py-2 cursor-pointer hover:bg-muted transition-colors duration-150"
               >
-                {isSuggestionState(suggestion) ? (
+                {isSuggestionCity(suggestion) ? (
                   <MapPin size={16} className="mr-2 text-muted-foreground" />
                 ) : (
                   <Building size={16} className="mr-2 text-muted-foreground" />
@@ -183,11 +220,9 @@ const Search: React.FC<SearchProps> = ({
                 <span>{suggestion}</span>
               </div>
             ))}
-
           </div>
         </div>
       )}
-
     </div>
   );
 };
