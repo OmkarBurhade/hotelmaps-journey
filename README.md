@@ -2,7 +2,7 @@
 
 ## See live project info
 
-**URL**: https://lovable.dev/projects/459c8d82-1600-43aa-b112-f956d008dbf0
+**URL**: https://map-tracking-lyart.vercel.app/
 
 ## How can I edit this code?
 
